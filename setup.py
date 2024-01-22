@@ -1,5 +1,5 @@
 
-from setuptools import setup
+from setuptools import setup, find_namespace_packages
 
 setup(
     name='pacsman_data',
@@ -9,8 +9,17 @@ setup(
     author_email='sebastien.tourbier@alumni.epfl.ch',
     description='Package to generate dummy data in Nifti and DICOM formats for testing PACSMAN',
     readme='README.md',
-    packages=['pacsman_data'],
-    package_data={'pacsman_data': ['data/*']},
+    packages=find_namespace_packages(where='.'),
+    package_dir={'': '.'},
+    package_data={
+        'pacsman_data': ['LICENSE'],
+        'pacsman_data.data': [
+            'LICENSE',
+            'nifti/*.nii.gz',
+            'dicomseries/*.dcm',
+            'png/*.png'
+        ]
+    },
     python_requires='>=3.10',
     install_requires=[
         'dicom-parser>=1.2.3',
