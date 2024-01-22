@@ -263,7 +263,7 @@ def get_parser() -> argparse.ArgumentParser:
         "--force",
         action="store_true",
         help="For overwriting the nifti, dicomseries, and png subdirectories "
-             "in the output directory if they already exist.",
+        "in the output directory if they already exist.",
     )
     parser.add_argument(
         "--save_nifti_png",
@@ -316,15 +316,8 @@ def main():
         os.makedirs(output_png_dir)
         ratio = args.image_size / 128
         nilearn.plotting.plot_img(
-            img,
-            cut_coords=(
-                100 * ratio,
-                80 * ratio,
-                100 * ratio
-            )
-        ).savefig(
-            os.path.join(output_png_dir, "pacsman.png")
-        )
+            img, cut_coords=(100 * ratio, 80 * ratio, 100 * ratio)
+        ).savefig(os.path.join(output_png_dir, "pacsman.png"))
 
     # Create dicomseries directory and generate the DICOM series
     # from the generated nifti image.
