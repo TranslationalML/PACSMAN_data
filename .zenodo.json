@@ -1,0 +1,16 @@
+{
+  "license": ["Apache-2.0", "CC-BY-4.0"],
+  "keywords": ["data", "testing", "dicom", "nifti", "pacsman"],
+  "creators": [
+    {
+      "name": "Tourbier, Sebastien",
+      "affiliation": "Centre Hospitalier Universitaire Vaudois and University of Lausanne (CHUV-UNIL), Switzerland"
+    },
+    {
+      "name": "Richiardi, Jonas",
+      "affiliation": "Centre Hospitalier Universitaire Vaudois and University of Lausanne (CHUV-UNIL), Switzerland"
+    }
+  ],
+  "access_right": "open",
+  "upload_type": "software"
+}
