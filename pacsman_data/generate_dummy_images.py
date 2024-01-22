@@ -314,7 +314,15 @@ def main():
     if args.save_nifti_png:
         output_png_dir = os.path.join(args.output_dir, "png")
         os.makedirs(output_png_dir)
-        nilearn.plotting.plot_img(img, cut_coords=(100, 80, 100)).savefig(
+        ratio = args.image_size / 128
+        nilearn.plotting.plot_img(
+            img,
+            cut_coords=(
+                100 * ratio,
+                80 * ratio,
+                100 * ratio
+            )
+        ).savefig(
             os.path.join(output_png_dir, "pacsman.png")
         )
 
