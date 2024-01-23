@@ -301,7 +301,7 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--force",
         action="store_true",
-        help="For overwriting the nifti, dicomseries, and png subdirectories "
+        help="For overwriting the nifti, dicomseries, bids, and png subdirectories "
         "in the output directory if they already exist.",
     )
     parser.add_argument(
