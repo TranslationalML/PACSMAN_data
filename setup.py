@@ -17,6 +17,8 @@ setup(
             'LICENSE',
             'nifti/*.nii.gz',
             'dicomseries/*.dcm',
+            'bids/*.json',
+            'bids/*.nii.gz',
             'png/*.png'
         ]
     },
