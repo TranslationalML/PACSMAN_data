@@ -13,11 +13,15 @@ but they can be used for testing any other DICOM / Nifti related tools.
 import os
 import argparse
 import shutil
+import subprocess
 import numpy as np
 import nilearn.plotting
 import nibabel as nib
 import pydicom
 from pprint import pprint
+
+
+OUTPUT_SUBDIRS = ["nifti", "png", "dicomseries", "bids"]
 
 
 def create_pacsman_head_data(image_size=128, head_radius=60, eye_radius=10):
@@ -232,6 +236,41 @@ def nifti2dicom_1file(nifti_path, output_dir):
         )
 
 
+def dicomseries2bids(dicomseries_dir, output_dir):
+    """Convert a DICOM series into a Nifti/JSON pair of files compliant to BIDS.
+    
+    It uses dcm2niix for the conversion. The participant label is set to 000001.
+    This pair of files is saved in the specified `output_dir` and can be later used
+    to create a dummy BIDS dataset for testing purposes.
+    
+    Args:
+        dicomseries_dir (str): the path of the directory containing the DICOM series
+        output_dir (str): the path to output the BIDS dataset
+    """
+    # Convert the DICOM series into a Nifti/JSON pair of files with dcm2niix using Popen.
+    try:
+        res = subprocess.run(
+            [
+                "dcm2niix",
+                "-b",
+                "y",
+                "-z",
+                "y",
+                "-f",
+                "sub-000001_T1w",
+                "-o",
+                output_dir,
+                dicomseries_dir,
+            ],
+            check=True,
+            capture_output=True,
+        )
+        pprint(res.stdout.decode("utf-8"))
+    except subprocess.CalledProcessError as e:
+        print(e.output)
+        raise e
+
+
 def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -292,19 +331,29 @@ def main():
     # If it already exists, remove all subdirectories if --force is set.
     # In this way, we keep the LICENSE file in the output directory.
     # Otherwise, raise an error.
-    if os.path.exists(args.output_dir):
-        if args.force:
-            for sub_dir in ["nifti", "png", "dicomseries"]:
-                if os.path.exists(os.path.join(args.output_dir, sub_dir)):
-                    shutil.rmtree(os.path.join(args.output_dir, sub_dir))
-        else:
-            raise ValueError(
-                f"Subdirectories nifti/, png/, and dicomseries/ already exist in {args.output_dir}. "
-                "Please remove them or use --force."
-            )
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
+
+    interrupt = False
+    for sub_dir in OUTPUT_SUBDIRS:
+        if os.path.exists(os.path.join(args.output_dir, sub_dir)):
+            if args.force:
+                shutil.rmtree(os.path.join(args.output_dir, sub_dir))
+            else:
+                print(
+                    f"ERROR: Subdirectory {sub_dir} already exists in {args.output_dir}. "
+                )
+                interrupt = True
+
+    if interrupt:
+        raise RuntimeError(
+            "Some subdirectories in the output directory already exist. "
+            "Please remove them or use the --force option."
+        )
 
     # Create nifti output directory and save the Nifti image.
     output_nifti_dir = os.path.join(args.output_dir, "nifti")
+    print(f"> Saving Nifti image in {output_nifti_dir}...")
     os.makedirs(output_nifti_dir)
     nifti_path = os.path.join(output_nifti_dir, "pacsman.nii.gz")
     nib.save(img, nifti_path)
@@ -313,6 +362,7 @@ def main():
     # if --save_nifti_png is set.
     if args.save_nifti_png:
         output_png_dir = os.path.join(args.output_dir, "png")
+        print(f"> Saving PNG image in {output_png_dir}...")
         os.makedirs(output_png_dir)
         ratio = args.image_size / 128
         nilearn.plotting.plot_img(
@@ -322,6 +372,7 @@ def main():
     # Create dicomseries directory and generate the DICOM series
     # from the generated nifti image.
     output_dicom_dir = os.path.join(args.output_dir, "dicomseries")
+    print(f"> Generating DICOM series in {output_dicom_dir}...")
     os.makedirs(output_dicom_dir)
     nifti2dicom_1file(
         nifti_path=nifti_path,
@@ -331,7 +382,20 @@ def main():
     # Print the DICOM header of the middle slice.
     slice_index = int(img_data.shape[2] / 2)
     ods = pydicom.dcmread(f"{output_dicom_dir}/slice{slice_index}.dcm")
+    print("\tDICOM header of the middle slice:")
     pprint(ods)
+
+    # Create BIDS output directory and generate the NIfTI/JSON pair of files
+    # from the generated DICOM series.
+    output_bids_dir = os.path.join(args.output_dir, "bids")
+    print(f"> Generating BIDS-compliant Nifti/JSON file pair in {output_bids_dir}...")
+    os.makedirs(output_bids_dir)
+    dicomseries2bids(
+        dicomseries_dir=output_dicom_dir,
+        output_dir=output_bids_dir,
+    )
+
+    print("Done!")
 
 
 if __name__ == "__main__":
