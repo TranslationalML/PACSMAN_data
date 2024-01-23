@@ -1,7 +1,8 @@
 # PACSMAN_data
 
-This repository contains Python scripts to generate dummy DICOM and Nifti files for testing the PACSMAN tool. The generated files are also shared.
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/TranslationalML/PACSMAN_data) ![GitHub Release Date](https://img.shields.io/github/release-date/TranslationalML/PACSMAN_data?color=orange) [![Zenodo DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10554781.svg)](https://doi.org/10.5281/zenodo.10554781)
 
+This repository contains Python scripts to generate dummy DICOM and Nifti files for testing the PACSMAN tool. The generated files are also shared.
 
 ## License
 
@@ -134,4 +135,26 @@ bids_files = glob(
         ).joinpath('*')
     )
 )
+```
+
+## How to cite
+
+If you are using code or data from this project, please acknowledge it in your work with the following entry:
+
+> S. Tourbier and J. Richiardi, “TranslationalML/PACSMAN_data: PACSMAN_data 1.0”. Zenodo, Jan. 23, 2024. doi: 10.5281/zenodo.10554781.
+
+If you are using Latex, this corresponds to the following bibtex entry:
+
+```bibtex
+@software{tourbier_2024_10554781,
+  author       = {Tourbier, Sebastien and
+                  Richiardi, Jonas},
+  title        = {TranslationalML/PACSMAN\_data: PACSMAN\_data 1.0},
+  month        = jan,
+  year         = 2024,
+  publisher    = {Zenodo},
+  version      = {1.0},
+  doi          = {10.5281/zenodo.10554781},
+  url          = {https://doi.org/10.5281/zenodo.10554781}
+}
 ```
