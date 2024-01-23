@@ -34,6 +34,8 @@ or alternatively
 micromamba env create -f https://raw.githubusercontent.com/TranslationalML/PACSMAN_data/main/conda/environment.yml
 ```
 
+The environment is also containing `dcm2niix` for conversion of a Nifti/JSON pair of files compliant to BIDS.
+
 ## Installation
 
 A `setup.py` file is provided such that you can easily install this package with `pip` without cloning the repository with the following command:
