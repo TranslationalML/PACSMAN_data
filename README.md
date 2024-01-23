@@ -139,7 +139,7 @@ bids_files = glob(
 
 ## How to cite
 
-If you are using code or data from this project, please acknowledge it in your work with the following entry:
+If you are using code or data from this project, please acknowledge it in your work with the following citation:
 
 > S. Tourbier and J. Richiardi, “TranslationalML/PACSMAN_data: PACSMAN_data 1.0”. Zenodo, Jan. 23, 2024. doi: 10.5281/zenodo.10554781.
 
