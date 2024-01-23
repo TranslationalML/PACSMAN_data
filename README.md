@@ -50,8 +50,7 @@ Once installed, you can run the command-line executable `generate_dummy_images`.
 
 ### Usage
 
-```generate_dummy_images -h
-
+```output
 usage: generate_dummy_images [-h] [--head_radius HEAD_RADIUS] [--eye_radius EYE_RADIUS]
                              [--image_size IMAGE_SIZE] -o OUTPUT_DIR [--force] [--save_nifti_png]
 
@@ -69,7 +68,7 @@ options:
                         Size of the generated image
   -o OUTPUT_DIR, --output_dir OUTPUT_DIR
                         Directory to store the generated DICOM files
-  --force               For overwriting the nifti, dicomseries, and png subdirectories in the output
+  --force               For overwriting the nifti, dicomseries, bids and png subdirectories in the output
                         directory if they already exist.
   --save_nifti_png      Save a PNG image of the generated Nifti image
 ```
