@@ -117,3 +117,20 @@ dicom_files = glob(
     )
 )
 ```
+
+### Example to retrieve the Nifti/JSON file pair compliant to BIDS
+
+```python
+from importlib_resources import files
+from glob import glob
+
+bids_files = glob(
+    str(  # Convert PosixPath to str
+        files(
+            'pacsman_data.data'
+        ).joinpath(
+            'bids'
+        ).joinpath('*')
+    )
+)
+```
