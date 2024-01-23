@@ -4,6 +4,8 @@
 
 This repository contains Python scripts to generate dummy DICOM and Nifti files for testing the PACSMAN tool. The generated files are also shared.
 
+![Orthogonal cut view of the generated PACSMAN image](https://github.com/TranslationalML/PACSMAN_data/blob/main/pacsman_data/data/png/pacsman.png?raw=true)
+
 ## License
 
 This repository contains code and data with different licenses:
