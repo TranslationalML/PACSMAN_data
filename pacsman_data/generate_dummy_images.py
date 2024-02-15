@@ -18,7 +18,15 @@ import numpy as np
 import nilearn.plotting
 import nibabel as nib
 import pydicom
-from pprint import pprint
+from loguru import logger
+from nibabel.loadsave import (
+    load as nib_load,
+    save as nib_save,
+)
+from nibabel.nifti1 import Nifti1Image
+from numpy.typing import NDArray
+from pydicom.dataset import FileMetaDataset
+from pydicom.uid import generate_uid
 
 
 OUTPUT_SUBDIRS = ["nifti", "png", "dicomseries", "bids"]
@@ -265,10 +273,12 @@ def dicomseries2bids(dicomseries_dir, output_dir):
             check=True,
             capture_output=True,
         )
-        pprint(res.stdout.decode("utf-8"))
+        logger.info(f"[dcm2niix] stdout:\n{res.stdout.decode('utf-8')}")
     except subprocess.CalledProcessError as e:
-        print(e.output)
-        raise e
+        logger.critical(e.output)
+        raise DCM2NIIXError(
+            f"Error during dcm2niix conversion: {e.returncode}\n{e.output}"
+        )
 
 
 def get_parser() -> argparse.ArgumentParser:
@@ -340,7 +350,7 @@ def main():
             if args.force:
                 shutil.rmtree(os.path.join(args.output_dir, sub_dir))
             else:
-                print(
+                logger.error(
                     f"ERROR: Subdirectory {sub_dir} already exists in {args.output_dir}. "
                 )
                 interrupt = True
@@ -353,7 +363,7 @@ def main():
 
     # Create nifti output directory and save the Nifti image.
     output_nifti_dir = os.path.join(args.output_dir, "nifti")
-    print(f"> Saving Nifti image in {output_nifti_dir}...")
+    logger.info(f"Saving Nifti image in {output_nifti_dir}...")
     os.makedirs(output_nifti_dir)
     nifti_path = os.path.join(output_nifti_dir, "pacsman.nii.gz")
     nib.save(img, nifti_path)
@@ -362,7 +372,7 @@ def main():
     # if --save_nifti_png is set.
     if args.save_nifti_png:
         output_png_dir = os.path.join(args.output_dir, "png")
-        print(f"> Saving PNG image in {output_png_dir}...")
+        logger.info(f"Saving PNG image in {output_png_dir}")
         os.makedirs(output_png_dir)
         ratio = args.image_size / 128
         nilearn.plotting.plot_img(
@@ -372,7 +382,7 @@ def main():
     # Create dicomseries directory and generate the DICOM series
     # from the generated nifti image.
     output_dicom_dir = os.path.join(args.output_dir, "dicomseries")
-    print(f"> Generating DICOM series in {output_dicom_dir}...")
+    logger.info(f"Generating DICOM series in {output_dicom_dir}")
     os.makedirs(output_dicom_dir)
     nifti2dicom_1file(
         nifti_path=nifti_path,
@@ -382,21 +392,17 @@ def main():
     # Print the DICOM header of the middle slice.
     slice_index = int(img_data.shape[2] / 2)
     ods = pydicom.dcmread(f"{output_dicom_dir}/slice{slice_index}.dcm")
-    print("\tDICOM header of the middle slice:")
-    pprint(ods)
+    logger.info(f"DICOM header of the middle slice:\n{ods}")
 
     # Create BIDS output directory and generate the NIfTI/JSON pair of files
     # from the generated DICOM series.
     output_bids_dir = os.path.join(args.output_dir, "bids")
-    print(f"> Generating BIDS-compliant Nifti/JSON file pair in {output_bids_dir}...")
+    logger.info(
+        f"> Generating BIDS-compliant Nifti/JSON file pair in {output_bids_dir}"
+    )
     os.makedirs(output_bids_dir)
     dicomseries2bids(
         dicomseries_dir=output_dicom_dir,
         output_dir=output_bids_dir,
     )
-
-    print("Done!")
-
-
-if __name__ == "__main__":
-    main()
+    logger.success("Done!")
