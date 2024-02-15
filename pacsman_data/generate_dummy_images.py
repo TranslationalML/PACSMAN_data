@@ -1,33 +1,36 @@
-#!/usr/bin/env python
-# coding: utf-8
+"""Submodule 3D PACMAN image files in Nifti & DICOM formats for testing purposes.
 
-# Copy
-
-"""Script to generate dummy 3D PACMAN image files in Nifti and DICOM formats for testing purposes.
-
-The generated image files are originally aimed to be used for testing PACSMAN commands,
-but they can be used for testing any other DICOM / Nifti related tools.
+The generated image files are originally aimed to be used for testing
+PACSMAN commands, but they can be used for testing any other
+DICOM / Nifti related tools.
 
 """
 
-import os
-import argparse
-import shutil
 import subprocess
+from pathlib import Path
+
 import numpy as np
-import nilearn.plotting
-import nibabel as nib
 import pydicom
-from pprint import pprint
+from loguru import logger
+from nibabel.loadsave import (
+    load as nib_load,
+)
+from numpy.typing import NDArray
+from pydicom.dataset import FileMetaDataset
+from pydicom.uid import generate_uid
+
+from pacsman_data.exceptions import DCM2NIIXError
 
 
-OUTPUT_SUBDIRS = ["nifti", "png", "dicomseries", "bids"]
-
-
-def create_pacsman_head_data(image_size=128, head_radius=60, eye_radius=10):
+def create_pacsman_head_data(  # noqa: C901
+    image_size: int = 128,
+    head_radius: int = 60,
+    eye_radius: int = 10,
+) -> NDArray[np.float_]:
     """Create a labeled 3D numpy array defining a PACSMAN head.
 
-    Voxels belonging to PACSMAN head are set to 2 and voxels belonging to the eyes are set to 1.
+    Voxels belonging to PACSMAN head are set to 2 and voxels belonging to the
+    eyes are set to 1.
 
     Args:
         image_size: size of the output image in the three dimensions
@@ -36,7 +39,6 @@ def create_pacsman_head_data(image_size=128, head_radius=60, eye_radius=10):
 
     Returns:
         img_data: 3D numpy array
-
     """
     # Check that the head radius is smaller than the image size divided by 2.
     if head_radius > image_size / 2:
@@ -97,17 +99,17 @@ def create_pacsman_head_data(image_size=128, head_radius=60, eye_radius=10):
     return img_data
 
 
-def convertNsave(
-    slice_arr,
-    output_dir,
-    series_instance_uid,
-    study_instance_uid,
-    frame_of_reference_uid,
-    implementation_class_uid,
-    implementation_version_name,
-    index=0,
-):
-    """Save the index-th slice of a 3D image (last dimension) in a DICOM file.
+def save_slice_as_dicom(  # noqa: PLR0915
+    slice_arr: NDArray[np.float_],
+    output_dir: Path,
+    series_instance_uid: pydicom.uid.UID,
+    study_instance_uid: pydicom.uid.UID,
+    frame_of_reference_uid: pydicom.uid.UID,
+    implementation_class_uid: pydicom.uid.UID,
+    implementation_version_name: str,
+    index: int = 0,
+) -> None:
+    """Save the index-th slice of a 3D image (last dimension) as a DICOM file.
 
     Args:
         slice_arr: 2D array (3D image slice)
@@ -115,15 +117,17 @@ def convertNsave(
         series_instance_uid: Series Instance UID
         study_instance_uid: Study Instance UID
         frame_of_reference_uid: Frame Of Reference UID
+        implementation_class_uid: Implementation Class UID
+        implementation_version_name: Implementation Version Name
         index: index of the slice in the 3D image (last dimension)
     """
     # Initialize DICOM dataset.
     ds = pydicom.Dataset()
 
     # Populate required values for file meta information.
-    sop_instance_uid = pydicom.uid.generate_uid()
+    sop_instance_uid = generate_uid()
 
-    meta = pydicom.Dataset()
+    meta = FileMetaDataset()
     meta.MediaStorageSOPClassUID = pydicom.uid.MRImageStorage
     meta.MediaStorageSOPInstanceUID = sop_instance_uid
     meta.TransferSyntaxUID = pydicom.uid.ExplicitVRLittleEndian
@@ -159,7 +163,7 @@ def convertNsave(
     ds.InstanceNumber = index
 
     ds.PatientOrientation = r"L\R"
-    ds.ImagePositionPatient = f"{-int(slice_arr.shape[0]/2)+1}\\0\\{index}"
+    ds.ImagePositionPatient = f"{-int(slice_arr.shape[0] / 2) + 1}\\0\\{index}"
     ds.ImageOrientationPatient = r"0\-1\0\1\0\0"
     ds.ImageType = r"ORIGINAL\PRIMARY\AXIAL"
 
@@ -198,33 +202,36 @@ def convertNsave(
 
     # Save the DICOM file.
     ds.save_as(
-        os.path.join(output_dir, f"slice{index}.dcm"),
-        write_like_original=False  # To prevent to have the file not appearing to be DICOM error.
+        output_dir / f"slice{index}.dcm",
+        write_like_original=False,
+        # To prevent to have the file not appearing to be DICOM error.
         # https://pydicom.github.io/pydicom/dev/reference/generated/pydicom.errors.InvalidDicomError.html
     )
 
 
-def nifti2dicom_1file(nifti_path, output_dir):
+def nifti2dicom_1file(
+    nifti_img_path: Path,
+    output_dir: Path,
+) -> None:
     """Convert a nifti file into dicom series.
 
     Args:
-        nifti_path (str): the path to a nifti file
+        nifti_img_path (str): the path to a nifti file
         output_dir (str): the path to output the DICOM files
     """
-
     # Generate unique Series / Study Instance UID and  Frame Of Reference UID.
-    series_instance_iud = pydicom.uid.generate_uid()
-    study_instance_uid = pydicom.uid.generate_uid()
-    frame_of_reference_uid = pydicom.uid.generate_uid()
-    implementation_class_uid = pydicom.uid.generate_uid()
+    series_instance_iud = generate_uid()
+    study_instance_uid = generate_uid()
+    frame_of_reference_uid = generate_uid()
+    implementation_class_uid = generate_uid()
     implementation_version_name = f"pydicom {pydicom.__version__}"
 
-    nifti_file = nib.load(nifti_path)
-    nifti_array = nifti_file.get_fdata()
+    nifti_file = nib_load(nifti_img_path)
+    nifti_array = nifti_file.get_fdata()  # type: ignore
     number_slices = nifti_array.shape[2]
 
     for slice_ in range(number_slices):
-        convertNsave(
+        save_slice_as_dicom(
             slice_arr=nifti_array[:, :, slice_],
             output_dir=output_dir,
             series_instance_uid=series_instance_iud,
@@ -236,18 +243,20 @@ def nifti2dicom_1file(nifti_path, output_dir):
         )
 
 
-def dicomseries2bids(dicomseries_dir, output_dir):
+def dicom_series_to_bids(
+    dicom_series_dir: Path,
+    output_dir: Path,
+) -> None:
     """Convert a DICOM series into a Nifti/JSON pair of files compliant to BIDS.
-    
+
     It uses dcm2niix for the conversion. The participant label is set to 000001.
     This pair of files is saved in the specified `output_dir` and can be later used
     to create a dummy BIDS dataset for testing purposes.
-    
+
     Args:
-        dicomseries_dir (str): the path of the directory containing the DICOM series
-        output_dir (str): the path to output the BIDS dataset
+        dicom_series_dir: the path of the directory containing the DICOM series
+        output_dir: the path to output the BIDS dataset
     """
-    # Convert the DICOM series into a Nifti/JSON pair of files with dcm2niix using Popen.
     try:
         res = subprocess.run(
             [
@@ -260,143 +269,14 @@ def dicomseries2bids(dicomseries_dir, output_dir):
                 "sub-000001_T1w",
                 "-o",
                 output_dir,
-                dicomseries_dir,
+                dicom_series_dir,
             ],
             check=True,
             capture_output=True,
         )
-        pprint(res.stdout.decode("utf-8"))
+        logger.info(f"[dcm2niix] stdout:\n{res.stdout.decode('utf-8')}")
     except subprocess.CalledProcessError as e:
-        print(e.output)
-        raise e
-
-
-def get_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--head_radius",
-        type=int,
-        default=60,
-        help="Radius of the PACSMAN head",
-    )
-    parser.add_argument(
-        "--eye_radius",
-        type=int,
-        default=10,
-        help="Radius of the PACSMAN eyes",
-    )
-    parser.add_argument(
-        "--image_size",
-        type=int,
-        default=128,
-        help="Size of the generated image",
-    )
-    parser.add_argument(
-        "-o",
-        "--output_dir",
-        type=str,
-        required=True,
-        help="Directory to store the generated DICOM files",
-    )
-    parser.add_argument(
-        "--force",
-        action="store_true",
-        help="For overwriting the nifti, dicomseries, bids, and png subdirectories "
-        "in the output directory if they already exist.",
-    )
-    parser.add_argument(
-        "--save_nifti_png",
-        action="store_true",
-        help="Save a PNG image of the generated Nifti image",
-    )
-    return parser
-
-
-def main():
-    # Create parser and parse arguments.
-    parser = get_parser()
-    args = parser.parse_args()
-
-    # Create 3D numpy array defining the PACSMAN head and eyes.
-    img_data = create_pacsman_head_data(
-        head_radius=args.head_radius,
-        eye_radius=args.eye_radius,
-        image_size=args.image_size,
-    )
-
-    # Create and save the PACSMAN image in Nifti format.
-    img = nib.Nifti1Image(img_data, np.eye(4))
-
-    # Handle output directory.
-    # If it already exists, remove all subdirectories if --force is set.
-    # In this way, we keep the LICENSE file in the output directory.
-    # Otherwise, raise an error.
-    if not os.path.exists(args.output_dir):
-        os.makedirs(args.output_dir)
-
-    interrupt = False
-    for sub_dir in OUTPUT_SUBDIRS:
-        if os.path.exists(os.path.join(args.output_dir, sub_dir)):
-            if args.force:
-                shutil.rmtree(os.path.join(args.output_dir, sub_dir))
-            else:
-                print(
-                    f"ERROR: Subdirectory {sub_dir} already exists in {args.output_dir}. "
-                )
-                interrupt = True
-
-    if interrupt:
-        raise RuntimeError(
-            "Some subdirectories in the output directory already exist. "
-            "Please remove them or use the --force option."
+        logger.critical(e.output)
+        raise DCM2NIIXError(
+            f"Error during dcm2niix conversion: {e.returncode}\n{e.output}"
         )
-
-    # Create nifti output directory and save the Nifti image.
-    output_nifti_dir = os.path.join(args.output_dir, "nifti")
-    print(f"> Saving Nifti image in {output_nifti_dir}...")
-    os.makedirs(output_nifti_dir)
-    nifti_path = os.path.join(output_nifti_dir, "pacsman.nii.gz")
-    nib.save(img, nifti_path)
-
-    # Create png output directory and save a PNG image of the Nifti image
-    # if --save_nifti_png is set.
-    if args.save_nifti_png:
-        output_png_dir = os.path.join(args.output_dir, "png")
-        print(f"> Saving PNG image in {output_png_dir}...")
-        os.makedirs(output_png_dir)
-        ratio = args.image_size / 128
-        nilearn.plotting.plot_img(
-            img, cut_coords=(100 * ratio, 80 * ratio, 100 * ratio)
-        ).savefig(os.path.join(output_png_dir, "pacsman.png"))
-
-    # Create dicomseries directory and generate the DICOM series
-    # from the generated nifti image.
-    output_dicom_dir = os.path.join(args.output_dir, "dicomseries")
-    print(f"> Generating DICOM series in {output_dicom_dir}...")
-    os.makedirs(output_dicom_dir)
-    nifti2dicom_1file(
-        nifti_path=nifti_path,
-        output_dir=output_dicom_dir,
-    )
-
-    # Print the DICOM header of the middle slice.
-    slice_index = int(img_data.shape[2] / 2)
-    ods = pydicom.dcmread(f"{output_dicom_dir}/slice{slice_index}.dcm")
-    print("\tDICOM header of the middle slice:")
-    pprint(ods)
-
-    # Create BIDS output directory and generate the NIfTI/JSON pair of files
-    # from the generated DICOM series.
-    output_bids_dir = os.path.join(args.output_dir, "bids")
-    print(f"> Generating BIDS-compliant Nifti/JSON file pair in {output_bids_dir}...")
-    os.makedirs(output_bids_dir)
-    dicomseries2bids(
-        dicomseries_dir=output_dicom_dir,
-        output_dir=output_bids_dir,
-    )
-
-    print("Done!")
-
-
-if __name__ == "__main__":
-    main()

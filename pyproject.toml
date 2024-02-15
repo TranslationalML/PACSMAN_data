@@ -1,0 +1,66 @@
+[tool.poetry]
+name = "pacsman-data"
+version = "1.0.1"
+description = "A Python package for generating test dummy DICOM and NIFTI files specifically designed to support PACSMAN tool testing."
+authors = ["Sebastien TOURBIER <sebastien.tourbier@alumni.epfl.ch>"]
+maintainers = ["Santiago SILVA <16252054+sssilvar@users.noreply.github.com>"]
+license = "Apache-2.0"
+readme = "README.md"
+packages = [
+    { include = "pacsman_data", from = "." }
+]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+dicom-parser = "^1.2.3"
+pydicom = "^2.3.1"
+nilearn = "^0.10.2"
+pyarrow = ">=15"  # FutureWarning: https://github.com/pandas-dev/pandas/issues/54466
+nibabel = "^5.2.0"
+matplotlib = "*"
+dcm2niix = "*"
+loguru = "*"
+
+[tool.poetry.group.dev.dependencies]
+jupyter = "*"
+black = "*"
+mypy = "*"
+ruff = "*"
+importlib-resources = "*"
+
+[tool.poetry.group.test.dependencies]
+pytest = ">=7,<8"
+pytest-cov = "*"
+
+[tool.ruff]
+exclude = ["docs"]
+lint.select = ["E", "F", "W", "C90", "I", "D", "UP", "PD", "PL"]
+lint.pydocstyle.convention = "google"
+lint.pylint.max-args = 8
+lint.mccabe.max-complexity = 5
+
+[tool.mypy]
+files = ["pacsman_data", "tests"]
+strict = true
+
+[[tool.mypy.overrides]]
+module = [
+    "nilearn.*",
+]
+ignore_missing_imports = true
+
+
+[tool.pytest.ini_options]
+addopts = "--cov=pacsman_data --cov-report=html --cov-report term-missing --cov-fail-under=100"
+testpaths = ["tests/"]
+
+[tool.coverage]
+run.omit = ["*tests*"]
+
+
+[tool.poetry.scripts]
+generate_dummy_images = "pacsman_data.cli:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
