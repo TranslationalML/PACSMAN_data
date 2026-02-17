@@ -7,7 +7,7 @@ setup(
     maintainer='Translational Machine Learning Lab',
     author='Sebastien Tourbier',
     author_email='sebastien.tourbier@alumni.epfl.ch',
-    description='Package to generate dummy data in Nifti and DICOM formats for testing PACSMAN',
+    description='Package to generate dummy data in Nifti and DICOM formats for testing PACSIFIER',
     readme='README.md',
     packages=find_namespace_packages(where='.'),
     package_dir={'': '.'},

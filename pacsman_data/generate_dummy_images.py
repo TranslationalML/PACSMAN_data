@@ -5,7 +5,7 @@
 
 """Script to generate dummy 3D PACMAN image files in Nifti and DICOM formats for testing purposes.
 
-The generated image files are originally aimed to be used for testing PACSMAN commands,
+The generated image files are originally aimed to be used for testing PACSIFIER commands,
 but they can be used for testing any other DICOM / Nifti related tools.
 
 """

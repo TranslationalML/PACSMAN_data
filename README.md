@@ -2,7 +2,7 @@
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/TranslationalML/PACSMAN_data) ![GitHub Release Date](https://img.shields.io/github/release-date/TranslationalML/PACSMAN_data?color=orange) [![Zenodo DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10554781.svg)](https://doi.org/10.5281/zenodo.10554781)
 
-This repository contains Python scripts to generate dummy DICOM and Nifti files for testing the PACSMAN tool. The generated files are also shared.
+This repository contains Python scripts to generate dummy DICOM and Nifti files for testing the PACSIFIER tool. The generated files are also shared.
 
 ![Orthogonal cut view of the generated PACSMAN image](https://github.com/TranslationalML/PACSMAN_data/blob/main/pacsman_data/data/png/pacsman.png?raw=true)
 
@@ -58,7 +58,7 @@ usage: generate_dummy_images [-h] [--head_radius HEAD_RADIUS] [--eye_radius EYE_
                              [--image_size IMAGE_SIZE] -o OUTPUT_DIR [--force] [--save_nifti_png]
 
 Script to generate dummy 3D PACMAN image files in Nifti and DICOM formats for testing purposes. The
-generated image files are originally aimed to be used for testing PACSMAN commands, but they can be used
+generated image files are originally aimed to be used for testing PACSIFIER commands, but they can be used
 for testing any other DICOM / Nifti related tools.
 
 options:
